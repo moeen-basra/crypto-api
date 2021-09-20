@@ -1,0 +1,80 @@
+version: '3.8'
+
+#Docker Networks
+networks:
+  laravel:
+    driver: bridge
+
+#Volumes
+volumes:
+  dbdata:
+    driver: local
+
+# Workflow
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: ./.docker/nginx/Dockerfile
+    container_name: nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - ./src:/var/www/html:delegated
+    depends_on:
+      - php
+      - database
+      - test_database
+    networks:
+      - laravel
+
+  database:
+    image: postgres
+    container_name: database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_ROOT_PASSWORD: secret
+    volumes:
+      - ./dbdata:/var/lib/postgresql/data
+    ports:
+      - '15432:5432'
+    networks:
+      - laravel
+
+  test_database:
+    image: postgres
+    container_name: test_database
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_ROOT_PASSWORD: secret
+    ports:
+      - '15433:5432'
+    networks:
+      - laravel
+
+  php:
+    build:
+      context: .
+      dockerfile: ./.docker/php/Dockerfile
+    container_name: php
+    volumes:
+      - ./src:/var/www/html:delegated
+#    ports:
+#      - "9000:9000"
+    networks:
+      - laravel
+
+  redis:
+    image: "redis:alpine"
+    container_name: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - laravel
