@@ -5,9 +5,7 @@ use Laravel\Lumen\Routing\Router;
 /** @var Router $router */
 
 $router->get('/', function () use ($router) {
-//    echo phpinfo();
-//    exit;
-    return $router->app->version();
+    return view('index');
 });
 
 $router->post('/login', [
